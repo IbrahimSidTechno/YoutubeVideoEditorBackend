@@ -1,10 +1,11 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-    name: String,
-    email: String,
-    password: String
-});
 
-const Videos = mongoose.model("videos", userSchema);
-module.exports = Videos
+const DownloadStatisticSchema = new mongoose.Schema(
+  {
+    downloadedlink: { type: String },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model('downloadstatistics', DownloadStatisticSchema);

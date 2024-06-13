@@ -1,10 +1,9 @@
-const express = require("express");
-require("dotenv").config();
-const cors = require("cors");
-const { sendResponse } = require("./helper/helper");
-const mongoose = require("mongoose");
-const userRouter = require("./routes/VideosRoute");
-
+import express from 'express';
+// require("dotenv").config();
+import cors from 'cors'
+// import {sendResponse} from './helper/helper.js'
+import mongoose from 'mongoose';
+import userRouter from './routes/VideosRoute.js'
 const app = express();
 app.use(express.json());
 app.use(cors());
