@@ -23,6 +23,11 @@ const upload = multer({ storage: storage });
 // Multer middleware to handle file uploads
 
 // POST route to handle downloading and saving videos
+
+const sanitizeFilename = (filename) => {
+  // Replace invalid characters with underscores
+  return filename.replace(/[^\w.-]/g, '_');
+};
 route.post('/videosend', upload.single('video'), async (req, res) => {
   try {
     // Extract the 'url' parameter from the request body
@@ -37,7 +42,7 @@ route.post('/videosend', upload.single('video'), async (req, res) => {
     const format = ytdl.chooseFormat(info.formats, { quality: 'highest' });
 
     // Set the filename for the downloaded video
-    const filename = info.videoDetails.title + '.mp4';
+    const filename = sanitizeFilename(info.videoDetails.title) + '.mp4';
     const filePath = './public/uploads/' + filename;
 
     
