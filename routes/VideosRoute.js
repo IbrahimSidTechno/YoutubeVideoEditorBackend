@@ -4,6 +4,8 @@ import { exec } from "child_process";
 import multer from "multer";
 import ffmpeg from 'fluent-ffmpeg'
 import uploadResult from "../utils/cloudinary.js";
+import fs from "fs"
+import file from '../models/VideosModel.js'
 
 
 const route = express.Router();
@@ -19,7 +21,55 @@ const storage = multer.diskStorage({
 
 // Multer middleware to handle file uploads
 const upload = multer({ storage: storage });
-// POST route to handle creating new download statistics
+
+// POST route to handle downloading and saving videos
+route.post('/videosend', upload.single('video'), async (req, res) => {
+  try {
+    // Extract the 'url' parameter from the request body
+    const { url } = req.body;
+
+    // Log the URL to verify it's received correctly
+    console.log("Received URL:", url);
+
+    // Get video information using ytdl library
+    const info = await ytdl.getInfo(url);
+
+    // Choose the highest quality format for the video
+    console.log(info);
+    const format = ytdl.chooseFormat(info.formats, { quality: 'highest' });
+
+    // Set the filename for the downloaded video
+    const filename = info.videoDetails.title + '.mp4';
+    const filePath = './public/uploads/' + filename;
+
+    // Pipe the video stream from ytdl to the file stream for saving
+    const fileStream = fs.createWriteStream(filePath);
+    ytdl(url, { format }).pipe(fileStream);
+
+    // Wait for the file to finish writing
+    await new Promise((resolve, reject) => {
+      fileStream.on('finish', resolve);
+      fileStream.on('error', reject);
+    });
+
+    // Upload the video to Cloudinary
+    const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
+
+    const data =  await file.create({
+      downloadedlink:cloudinaryResult.url
+    })
+    // Respond with success message and Cloudinary result
+    res.status(200).json({ message: 'Video saved and uploaded successfully.', data });
+  } catch (error) {
+    // Handle errors gracefully
+    console.error("Error:", error);
+    res.status(500).send(error.message);
+  }
+});
+
+
+
+
 route.get('/videoget', async (req, res) => {
   try {
     // Extract the 'url' parameter from the request query
@@ -79,7 +129,7 @@ route.post("/download/trim", upload.single("video"), async (req, res) => {
         }
         console.log('Trimmed video sent successfully.');
         // Uncomment the line below if you want to delete the trimmed video file after sending
-        // fs.unlinkSync(trimmedFilePath);
+        fs.unlinkSync(trimmedFilePath);
       });
     })
     .on('error', function (err) {
