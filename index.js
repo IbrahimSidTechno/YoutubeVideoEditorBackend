@@ -13,6 +13,11 @@ app.use(
   "/api",
   userRouter
 );
+app.use(function(req, res, next) {
+  res.header("Cross-Origin-Embedder-Policy", "require-corp");
+  res.header("Cross-Origin-Opener-Policy", "same-origin");
+  next();
+});
 
 const PORT = 4000;
 const MONGODB_URI =
