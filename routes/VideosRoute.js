@@ -29,18 +29,18 @@ route.post('/videosend', upload.single('video'), async (req, res) => {
     const { url } = req.body;
 
     // Log the URL to verify it's received correctly
-    console.log("Received URL:", url);
 
     // Get video information using ytdl library
     const info = await ytdl.getInfo(url);
 
     // Choose the highest quality format for the video
-    console.log(info);
     const format = ytdl.chooseFormat(info.formats, { quality: 'highest' });
 
     // Set the filename for the downloaded video
     const filename = info.videoDetails.title + '.mp4';
     const filePath = './public/uploads/' + filename;
+
+    
 
     // Pipe the video stream from ytdl to the file stream for saving
     const fileStream = fs.createWriteStream(filePath);
@@ -51,13 +51,13 @@ route.post('/videosend', upload.single('video'), async (req, res) => {
       fileStream.on('finish', resolve);
       fileStream.on('error', reject);
     });
-
     // Upload the video to Cloudinary
     const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
 
     const data =  await file.create({
 
-      downloadedlink:cloudinaryResult.url
+      downloadedlink:cloudinaryResult.url,
+      filename:filePath
     })
     // Respond with success message and Cloudinary result
     res.status(200).json({ message: 'Video saved and uploaded successfully.', data });
@@ -115,9 +115,13 @@ route.get('/videoget', async (req, res) => {
   }
 })
 
-route.post("/download/trim", upload.single("video"), async (req, res) => {
-  const { startTime, endTime } = req.body;
-  const videoPath = req.file.path;
+route.post("/download/trim", async (req, res) => {
+  const { startTime, endTime ,_id } = req.body;
+  console.log(startTime, endTime,_id);
+
+const data = await file.findById(_id)
+console.log(data);
+  const videoPath = data.filename
 
   const re = await uploadResult(videoPath)
 
