@@ -17,10 +17,10 @@ const storage = multer.diskStorage({
     cb(null, file.originalname)
   }
 });
+const upload = multer({ storage: storage });
 
 
 // Multer middleware to handle file uploads
-const upload = multer({ storage: storage });
 
 // POST route to handle downloading and saving videos
 route.post('/videosend', upload.single('video'), async (req, res) => {
@@ -56,7 +56,7 @@ route.post('/videosend', upload.single('video'), async (req, res) => {
     const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
 
     const data =  await file.create({
-      
+
       downloadedlink:cloudinaryResult.url
     })
     // Respond with success message and Cloudinary result
@@ -68,6 +68,15 @@ route.post('/videosend', upload.single('video'), async (req, res) => {
   }
 });
 
+route.get('/videoget/:id', async (req, res) => {
+const {id} = req.params
+const response = await file.findById(id)
+
+res.json(
+  response
+)
+
+})
 
 
 
