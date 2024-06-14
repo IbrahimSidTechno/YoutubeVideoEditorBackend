@@ -56,6 +56,7 @@ route.post('/videosend', upload.single('video'), async (req, res) => {
     const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
 
     const data =  await file.create({
+      
       downloadedlink:cloudinaryResult.url
     })
     // Respond with success message and Cloudinary result
