@@ -102,45 +102,41 @@ const videoGet = asyncHandler(async (req, res) => {
     try {
         // Extract the 'url' parameter from the request query
         const { url } = req.query;
-
         if (!url) {
             throw new ApiError(404,"Url Is Undefined")
         }
-
         // Log the URL to verify it's received correctly
         console.log("Received URL:", url);
 
+        
+    
         // Get video information using ytdl library
         const info = await ytdl.getInfo(url);
-
-        
         if (!info) {
             throw new ApiError(404,"Url not Correct")
         }
         // Choose the highest quality format for the video
         const format = ytdl.chooseFormat(info.formats, { quality: "highest" });
-
+    
         // Extract video title from the video information
         const title = info.videoDetails.title;
-
+    
         // Set response headers to indicate file download
         res.setHeader(
-            "Content-Disposition",
-            `attachment; filename*=UTF-8''${encodeURIComponent(title)}.mp4`
+          "Content-Disposition",
+          `attachment; filename*=UTF-8''${encodeURIComponent(title)}.mp4`
         );
-
-        res.status(200).json()
-
+    
         // Log the title to verify it's correctly set
         console.log("Video Title:", title);
-
+    
         // Pipe the video stream from ytdl to the response stream
         ytdl(url, { format }).pipe(res);
-    } catch (error) {
+      } catch (error) {
         // Handle errors gracefully
         console.error("Error:", error);
         res.status(500).send(error.message);
-    }
+      }
 })
 
 const downloadTrim = asyncHandler(async (req, res) => {
