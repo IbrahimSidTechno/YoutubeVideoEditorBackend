@@ -153,9 +153,7 @@ const downloadTrim = asyncHandler(async (req, res) => {
     console.log(data);
     const videoPath = data.filename
 
-    const re = await uploadResult(videoPath)
-
-    console.log(re.url);
+   
     // Output file path for trimmed video
     const trimmedFilePath = './public/uploads/trimmed_video.mp4';
 
