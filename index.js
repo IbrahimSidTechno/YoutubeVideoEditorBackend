@@ -13,7 +13,7 @@ app.use(
   "/api",
   userRouter
 );
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.header("Cross-Origin-Embedder-Policy", "require-corp");
   res.header("Cross-Origin-Opener-Policy", "same-origin");
   next();
@@ -22,7 +22,7 @@ app.use(function(req, res, next) {
 const PORT = 4000;
 const MONGODB_URI =
   "mongodb+srv://ibrahimsidtechno:ibrahim123@cluster0.e5wtkps.mongodb.net/";
-  
+
 const connectWithRetry = () => {
   mongoose
     .connect(MONGODB_URI)
