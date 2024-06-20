@@ -7,11 +7,12 @@ cloudinary.config({
 });
 
 const DeleteFile = async (filename) => {
+    console.log(filename);
     try {
         if (!filename) return null;
         const image = filename.split('/');
         const imageName = image[image.length - 1].split(".")[0];
-        
+
         const response = await cloudinary.uploader.destroy(imageName, { resource_type: 'video' });
 
         if (response.result === "not found") {
