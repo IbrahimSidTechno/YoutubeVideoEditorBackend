@@ -33,7 +33,7 @@ const videosend = asyncHandler(async (req, res) => {
         }
 
         // Choose the highest quality format for the video
-        const format = ytdl.chooseFormat(info.formats, { quality: 'highest' });
+        const format = ytdl.chooseFormat(info.formats, { filter: 'videoandaudio', quality: 'highestvideo' });
 
         // Set the filename for the downloaded video
         const filename = sanitizeFilename(info.videoDetails.title) + '.mp4';
@@ -57,6 +57,7 @@ const videosend = asyncHandler(async (req, res) => {
             throw new ApiError(404,"file Path Not Defined")
             
         }
+        console.log(filePath);
         const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
         if (!cloudinaryResult) {
             throw new ApiError(404,"Image Size Large")
@@ -88,7 +89,6 @@ const videoGetById = asyncHandler(async (req, res) => {
     if (!id) {
         throw new ApiError(404,"Id Is Undefined")
     }
-    console.log(id);
     const response = await file.findById(id)
     if (!response) {
         throw new ApiError(404,"Id Not Correct")
@@ -108,7 +108,6 @@ const videoGet = asyncHandler(async (req, res) => {
         }
         
         // Log the URL to verify it's received correctly
-        console.log("Received URL:", url);
 
         // Get video information using ytdl library
         const info = await ytdl.getInfo(url);
@@ -129,7 +128,6 @@ const videoGet = asyncHandler(async (req, res) => {
         );
 
         // Log the title to verify it's correctly set
-        console.log("Video Title:", title);
 
         // Pipe the video stream from ytdl to the response stream
         ytdl(url, { format }).pipe(res);
@@ -147,10 +145,8 @@ const downloadTrim = asyncHandler(async (req, res) => {
     // if(!startTime || !endTime || !_id){
     //     throw new ApiError(404," All Field Is Required")
     // }
-    console.log(startTime, endTime, _id);
 
     const data = await file.findById(_id)
-    console.log(data);
     const videoPath = data.filename
 
    
@@ -163,13 +159,11 @@ const downloadTrim = asyncHandler(async (req, res) => {
         .setDuration(endTime - startTime)
         .output(trimmedFilePath)
         .on('end', function () {
-            console.log('Trimmed video saved at:', trimmedFilePath);
             res.status(200).download(trimmedFilePath, 'trimmed_video.mp4', async (err) => {
                 if (err) {
                     console.error(`Error sending trimmed video: ${err}`);
                     return res.status(500).json({ error: 'Error sending trimmed video.' });
                 }
-                console.log('Trimmed video sent successfully.');
                 // Uncomment the line below if you want to delete the trimmed video file after sending
                 fs.unlinkSync(videoPath);
                 fs.unlinkSync(trimmedFilePath);
