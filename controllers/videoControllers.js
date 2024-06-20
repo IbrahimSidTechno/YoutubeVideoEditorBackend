@@ -21,7 +21,7 @@ const videosend = asyncHandler(async (req, res) => {
 
 
         if (!url) {
-            throw new ApiError(404,"Url Is Undefined")
+            throw new ApiError(404, "Url Is Undefined")
         }
 
         // Log the URL to verify it's received correctly
@@ -29,7 +29,7 @@ const videosend = asyncHandler(async (req, res) => {
         // Get video information using ytdl library
         const info = await ytdl.getInfo(url);
         if (!info) {
-            throw new ApiError(404,"Url not Correct")
+            throw new ApiError(404, "Url not Correct")
         }
 
         // Choose the highest quality format for the video
@@ -38,7 +38,7 @@ const videosend = asyncHandler(async (req, res) => {
         // Set the filename for the downloaded video
         const filename = sanitizeFilename(info.videoDetails.title) + '.mp4';
 
-        
+
         const filePath = './public/uploads/' + filename;
 
 
@@ -54,13 +54,13 @@ const videosend = asyncHandler(async (req, res) => {
         });
         // Upload the video to Cloudinary
         if (!filePath) {
-            throw new ApiError(404,"file Path Not Defined")
-            
+            throw new ApiError(404, "file Path Not Defined")
+
         }
         const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
         if (!cloudinaryResult) {
-            throw new ApiError(404,"Image Size Large")
-            
+            throw new ApiError(404, "Image Size Large")
+
         }
 
         const data = await file.create({
@@ -70,11 +70,11 @@ const videosend = asyncHandler(async (req, res) => {
         })
 
         if (!data) {
-            throw new ApiError(404,"Data Not Save")
-            
+            throw new ApiError(404, "Data Not Save")
+
         }
         // Respond with success message and Cloudinary result
-        res.status(200).json(new ApiResponse(200,data,"Data Add Successfully"));
+        res.status(200).json(new ApiResponse(200, data, "Data Add Successfully"));
     } catch (error) {
         // Handle errors gracefully
         console.error("Error:", error);
@@ -86,12 +86,12 @@ const videosend = asyncHandler(async (req, res) => {
 const videoGetById = asyncHandler(async (req, res) => {
     const { id } = req.params
     if (!id) {
-        throw new ApiError(404,"Id Is Undefined")
+        throw new ApiError(404, "Id Is Undefined")
     }
     console.log(id);
     const response = await file.findById(id)
     if (!response) {
-        throw new ApiError(404,"Id Not Correct")
+        throw new ApiError(404, "Id Not Correct")
     }
     res.json(
         response
@@ -104,40 +104,40 @@ const videoGet = asyncHandler(async (req, res) => {
         // Extract the 'url' parameter from the request query
         const { url } = req.query;
         if (!url) {
-            throw new ApiError(404,"Url Is Undefined")
+            throw new ApiError(404, "Url Is Undefined")
         }
         // Log the URL to verify it's received correctly
         console.log("Received URL:", url);
 
-        
-    
+
+
         // Get video information using ytdl library
         const info = await ytdl.getInfo(url);
         if (!info) {
-            throw new ApiError(404,"Url not Correct")
+            throw new ApiError(404, "Url not Correct")
         }
         // Choose the highest quality format for the video
         const format = ytdl.chooseFormat(info.formats, { quality: "highest" });
-    
+
         // Extract video title from the video information
         const title = info.videoDetails.title;
-    
+
         // Set response headers to indicate file download
         res.setHeader(
-          "Content-Disposition",
-          `attachment; filename*=UTF-8''${encodeURIComponent(title)}.mp4`
+            "Content-Disposition",
+            `attachment; filename*=UTF-8''${encodeURIComponent(title)}.mp4`
         );
-    
+
         // Log the title to verify it's correctly set
         console.log("Video Title:", title);
-    
+
         // Pipe the video stream from ytdl to the response stream
         ytdl(url, { format }).pipe(res);
-      } catch (error) {
+    } catch (error) {
         // Handle errors gracefully
         console.error("Error:", error);
         res.status(500).send(error.message);
-      }
+    }
 })
 
 const downloadTrim = asyncHandler(async (req, res) => {
@@ -151,10 +151,6 @@ const downloadTrim = asyncHandler(async (req, res) => {
     const data = await file.findById(_id)
     console.log(data);
     const videoPath = data.filename
-
-    const re = await uploadResult(videoPath)
-
-    console.log(re.url);
     // Output file path for trimmed video
     const trimmedFilePath = './public/uploads/trimmed_video.mp4';
 
@@ -176,14 +172,14 @@ const downloadTrim = asyncHandler(async (req, res) => {
                 fs.unlinkSync(trimmedFilePath);
                 const isDeleteFile = await DeleteFile(data.downloadedlink)
 
-                if(!isDeleteFile){
-                    throw new ApiError(401,"Video Not Deleted")
+                if (!isDeleteFile) {
+                    throw new ApiError(401, "Video Not Deleted")
                 }
                 const dataDelete = await file.findByIdAndDelete(_id)
-                
-                if(!dataDelete){
-                    throw new ApiError(401,"Data Not Deleted")
-                    
+
+                if (!dataDelete) {
+                    throw new ApiError(401, "Data Not Deleted")
+
                 }
             });
         })
@@ -196,7 +192,7 @@ const downloadTrim = asyncHandler(async (req, res) => {
 
 
 
-    
+
 
 export {
     downloadTrim,
