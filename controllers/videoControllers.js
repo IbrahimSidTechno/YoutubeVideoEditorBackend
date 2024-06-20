@@ -7,12 +7,13 @@ import file from '../models/VideosModel.js'
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import DeleteFile from "../utils/cloudinaryDeleteVideo.js";
+
 
 const sanitizeFilename = (filename) => {
     // Replace invalid characters with underscores
     return filename.replace(/[^\w.-]/g, '_');
 };
-
 const videosend = asyncHandler(async (req, res) => {
     try {
         // Extract the 'url' parameter from the request body
@@ -164,7 +165,7 @@ const downloadTrim = asyncHandler(async (req, res) => {
         .output(trimmedFilePath)
         .on('end', function () {
             console.log('Trimmed video saved at:', trimmedFilePath);
-            res.status(200).download(trimmedFilePath, 'trimmed_video.mp4', (err) => {
+            res.status(200).download(trimmedFilePath, 'trimmed_video.mp4', async (err) => {
                 if (err) {
                     console.error(`Error sending trimmed video: ${err}`);
                     return res.status(500).json({ error: 'Error sending trimmed video.' });
@@ -173,6 +174,17 @@ const downloadTrim = asyncHandler(async (req, res) => {
                 // Uncomment the line below if you want to delete the trimmed video file after sending
                 fs.unlinkSync(videoPath);
                 fs.unlinkSync(trimmedFilePath);
+                const isDeleteFile = await DeleteFile(data.downloadedlink)
+
+                if(!isDeleteFile){
+                    throw new ApiError(401,"Video Not Deleted")
+                }
+                const dataDelete = await file.findByIdAndDelete(_id)
+                
+                if(!dataDelete){
+                    throw new ApiError(401,"Data Not Deleted")
+                    
+                }
             });
         })
         .on('error', function (err) {
