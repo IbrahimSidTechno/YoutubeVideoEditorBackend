@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 
+
 const DownloadStatisticSchema = new mongoose.Schema(
   {
     downloadedlink: { type: String },
@@ -8,5 +9,6 @@ const DownloadStatisticSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 
 export default mongoose.model('downloadstatistics', DownloadStatisticSchema);
