@@ -39,7 +39,7 @@ const videosend = asyncHandler(async (req, res) => {
         const filename = sanitizeFilename(info.videoDetails.title) + '.mp4';
 
         
-        const filePath = '/public/uploads/' + filename;
+        const filePath = './public/uploads/' + filename;
 
 
 
@@ -151,7 +151,7 @@ const downloadTrim = asyncHandler(async (req, res) => {
 
    
     // Output file path for trimmed video
-    const trimmedFilePath = '/public/uploads/trimmed_video.mp4';
+    const trimmedFilePath = './public/uploads/trimmed_video.mp4';
 
     // Trim the video using ffmpeg
     ffmpeg(videoPath)
