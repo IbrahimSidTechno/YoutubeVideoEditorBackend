@@ -170,15 +170,16 @@ const downloadTrim = asyncHandler(async (req, res) => {
     const { startTime, endTime, _id ,isPublished} = req.body;
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-
-    if(isPublished){
-        const isDeleted = await file.findByIdAndUpdate(_id,{
-            $set:{
-                isPublished
-            },
-        },{new:true});
-        console.log(isDeleted);
+    if (isPublished) {
+        const updatedFile = await file.findByIdAndUpdate(_id, {
+            $set: {
+                isPublished: isPublished  // Set isPublished field to the value of isPublished
+            }
+        }, { new: true });
+    
+        console.log(updatedFile);
     }
+    
     // Fetch video information from database based on _id
     const data = await file.findById(_id);
     if (!data) {
@@ -231,7 +232,8 @@ const downloadTrim = asyncHandler(async (req, res) => {
 
 
 const getAllStatus = asyncHandler(async(req,res) =>{
-    const data = await file.find({isPublished:true})
+    const data = await file.find({isPublished:true}).limit(60)
+
 
 
     res.status(200).json(new ApiResponse(200,data,"All Data Fetched Successfully"))
