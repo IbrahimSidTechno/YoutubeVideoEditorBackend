@@ -7,9 +7,10 @@
       }
     ],
     "routes": [
-      { "src": "/videosend/(.*)", "dest": "/public/uploads/" }, 
-      { "src": "/download/(.*)", "dest": "/public/uploads/" },  
-      { "src": "/(.*)", "dest": "/" }  
+      {
+        "src": "/(.*)",
+        "dest": "/"
+      }
     ]
   }
   
