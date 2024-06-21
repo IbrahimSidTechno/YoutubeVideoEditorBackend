@@ -1,14 +1,16 @@
 import mongoose from "mongoose";
 
+const { Schema } = mongoose;
 
-
-const DownloadStatisticSchema = new mongoose.Schema(
+const DownloadStatisticSchema = new Schema(
   {
-    downloadedlink: { type: String },
-    filename: { type: String }
+    downloadedlink: { type: String, required: true },
+    filename: { type: String, required: true },
+    isPublished: { type: Boolean, default: false }
   },
   { timestamps: true }
 );
 
+const DownloadStatistic = mongoose.model('DownloadStatistic', DownloadStatisticSchema);
 
-export default mongoose.model('downloadstatistics', DownloadStatisticSchema);
+export default DownloadStatistic;

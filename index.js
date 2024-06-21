@@ -1,40 +1,44 @@
 import express from 'express';
-// require("dotenv").config();
-import cors from 'cors'
-// import {sendResponse} from './helper/helper.js'
+import cors from 'cors';
 import mongoose from 'mongoose';
-import userRouter from './routes/VideosRoute.js'
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import userRouter from './routes/VideosRoute.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(cors());
-app.use("/uploads/", express.static("uploads"));
 
-app.use(
-  "/api",
-  userRouter
-);
+// Static files (uploads and trim directories)
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+app.use('/trim', express.static(path.join(__dirname, 'public', 'trim')));
 
-const PORT = 4000;
-const MONGODB_URI =
-  "mongodb+srv://ibrahimsidtechno:ibrahim123@cluster0.e5wtkps.mongodb.net/";
-  
+// Routes
+app.use('/api', userRouter);
+
+// Database connection and server start
+const PORT = process.env.PORT || 4000;
+const MONGODB_URI = "mongodb+srv://ibrahimsidtechno:ibrahim123@cluster0.e5wtkps.mongodb.net/your-database-name";
+
 const connectWithRetry = () => {
-  mongoose
-    .connect(MONGODB_URI)
+  mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
-      console.log(
-        `Database Is Successfuly Connect And Running On => ${PORT} Port`
-      );
-      app.listen(process.env.PORT);
+      console.log(`Database connected successfully. App running on port ${PORT}`);
     })
     .catch((err) => {
-      console.log("Database connection unsuccessful, retry after 5 seconds.");
-      console.error(err);
+      console.error("Database connection unsuccessful, retrying in 5 seconds:", err);
       setTimeout(connectWithRetry, 5000);
     });
 };
+
 connectWithRetry();
 
-const server = app.listen(PORT, () => {
-  console.log(`Server successFully Running on ${PORT}`);
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
