@@ -10,10 +10,31 @@ import ApiResponse from "../utils/ApiResponse.js";
 import DeleteFile from "../utils/cloudinaryDeleteVideo.js";
 
 
+
+const getFileSizeInMB = (filePath) => {
+    try {
+        const stats = fs.statSync(filePath); // Get file stats synchronously
+        const fileSizeInBytes = stats.size; // File size in bytes
+        const fileSizeInMB = fileSizeInBytes / (1024 * 1024); // Convert bytes to megabytes
+        return fileSizeInMB.toFixed(2); // Return size rounded to 2 decimal places
+    } catch (error) {
+        console.error('Error getting file size:', error);
+        return null;
+    }
+};
+
+
+
 const sanitizeFilename = (filename) => {
     // Replace invalid characters with underscores
     return filename.replace(/[^\w.-]/g, '_');
 };
+
+
+
+
+
+
 const videosend = asyncHandler(async (req, res) => {
     try {
         // Extract the 'url' parameter from the request body
@@ -58,6 +79,8 @@ const videosend = asyncHandler(async (req, res) => {
             
         }
         console.log(filePath);
+        const mb = getFileSizeInMB(filePath)
+        console.log(mb);
         const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
         if (!cloudinaryResult) {
             throw new ApiError(404,"Image Size Large")
@@ -98,7 +121,6 @@ const videoGetById = asyncHandler(async (req, res) => {
     )
 })
 
-
 const videoGet = asyncHandler(async (req, res) => {
     try {
         // Extract the 'url' parameter from the request query
@@ -121,13 +143,25 @@ const videoGet = asyncHandler(async (req, res) => {
         // Extract video title from the video information
         const title = info.videoDetails.title;
 
+        // Calculate file size in megabytes
+        const fileSizeInBytes = format.contentLength || 0;
+        const fileSizeInMB = fileSizeInBytes / (1024 * 1024);
+
+        // Log the title and file size to verify they're correctly set
+        console.log(`Title: ${title}, File Size: ${fileSizeInMB.toFixed(2)} MB`);
+
         // Set response headers to indicate file download
         res.setHeader(
-          "Content-Disposition",
-          `attachment; filename*=UTF-8''${encodeURIComponent(title)}.mp4`
+            "Content-Disposition",
+            `attachment; filename*=UTF-8''${encodeURIComponent(title)}.mp4`
         );
+        res.setHeader("Content-Length", fileSizeInBytes);
+        res.setHeader("File-Size-MB", fileSizeInMB.toFixed(2));
 
-        // Log the title to verify it's correctly set
+        // Send JSON response with data (optional)
+        // Comment out this block if not needed
+        // const data = { title, fileSizeMB: fileSizeInMB.toFixed(2) };
+        // res.json(data);
 
         // Pipe the video stream from ytdl to the response stream
         ytdl(url, { format }).pipe(res);
@@ -137,6 +171,7 @@ const videoGet = asyncHandler(async (req, res) => {
         res.status(500).send(error.message);
     }
 });
+
 
 
 const downloadTrim = asyncHandler(async (req, res) => {
