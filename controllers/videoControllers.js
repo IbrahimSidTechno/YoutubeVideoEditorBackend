@@ -130,6 +130,7 @@ const videoGet = asyncHandler(async (req, res) => {
         }
         
         // Log the URL to verify it's received correctly
+        console.log("Requested URL:", url);
 
         // Get video information using ytdl library
         const info = await ytdl.getInfo(url);
@@ -144,33 +145,37 @@ const videoGet = asyncHandler(async (req, res) => {
         const title = info.videoDetails.title;
 
         // Calculate file size in megabytes
-        const fileSizeInBytes = format.contentLength || 0;
+        let fileSizeInBytes = 0;
+        if (format && format.contentLength) {
+            fileSizeInBytes = parseInt(format.contentLength);
+        } else {
+            // Fallback mechanism: Estimate file size based on duration and bitrate
+            const durationInSeconds = info.videoDetails.lengthSeconds;
+            const estimatedBitrate = format.bitrate || 1; // Default to 1 if bitrate is not available
+            fileSizeInBytes = durationInSeconds * estimatedBitrate / 8; // Calculate estimated file size in bytes
+        }
         const fileSizeInMB = fileSizeInBytes / (1024 * 1024);
 
         // Log the title and file size to verify they're correctly set
-        console.log(`Title: ${title}, File Size: ${fileSizeInMB.toFixed(2)} MB`);
+        console.log(`Title: ${title}, File Size: ${Math.round(fileSizeInMB)} MB`);
 
-        // Set response headers to indicate file download
+        // Set response headers to indicate file download and size
         res.setHeader(
             "Content-Disposition",
             `attachment; filename*=UTF-8''${encodeURIComponent(title)}.mp4`
         );
-        res.setHeader("Content-Length", fileSizeInBytes);
-        res.setHeader("File-Size-MB", fileSizeInMB.toFixed(2));
-
-        // Send JSON response with data (optional)
-        // Comment out this block if not needed
-        // const data = { title, fileSizeMB: fileSizeInMB.toFixed(2) };
-        // res.json(data);
+        res.setHeader("File-Size-MB", Math.round(fileSizeInMB));
 
         // Pipe the video stream from ytdl to the response stream
         ytdl(url, { format }).pipe(res);
     } catch (error) {
         // Handle errors gracefully
         console.error("Error:", error);
-        res.status(500).send(error.message);
+        res.status(error.statusCode || 500).send(error.message);
     }
 });
+
+
 
 
 
