@@ -26,7 +26,7 @@ const PORT = process.env.PORT || 4000;
 const MONGODB_URI = "mongodb+srv://ibrahimsidtechno:ibrahim123@cluster0.e5wtkps.mongodb.net/your-database-name";
 
 const connectWithRetry = () => {
-  mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  mongoose.connect(MONGODB_URI)
     .then(() => {
       console.log(`Database connected successfully. App running on port ${PORT}`);
     })
