@@ -1,9 +1,20 @@
 {
   "version": 2,
   "routes": [
-    { "handle": "filesystem" },
-    { "src": "/uploads/(.*)", "dest": "/public/uploads/$1" },
-    { "src": "/trim/(.*)", "dest": "/public/trim/$1" },
-    { "src": "/(.*)", "dest": "/index.js" }
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "/public/uploads/$1"
+    },
+    {
+      "src": "/trim/(.*)",
+      "dest": "/public/trim/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
   ]
 }

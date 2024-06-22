@@ -23,6 +23,10 @@ lib-cov
 coverage
 *.lcov
 
+
+# Ignoring uploads and trim directories
+/public/uploads
+/public/trim
 # nyc test coverage
 .nyc_output
 
