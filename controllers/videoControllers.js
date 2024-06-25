@@ -199,22 +199,27 @@ const downloadTrim = asyncHandler(async (req, res) => {
                 .on('error', reject)
                 .run();
         });
+        fs.unlink(data.filename, (err) => {
+            if (err) {
+                console.error('Error deleting trimmed file:', err);
+            }
+            console.log('Trimmed file deleted successfully.');
+        });
 
         // Send trimmed video file as a download
         console.log(trimmedFilePath);
-        res.download(trimmedFilePath, trimmedFileName, (err) => {
+        res.download(trimmedFilePath, trimmedFileName, async (err) => {
             if (err) {
                 console.error('Error downloading trimmed video:', err);
                 return res.status(500).json({ error: 'Error downloading trimmed video.' });
             }
 
             // Clean up the trimmed file after download completes
-            fs.unlink(trimmedFilePath, (err) => {
-                if (err) {
-                    console.error('Error deleting trimmed file:', err);
-                }
-                console.log('Trimmed file deleted successfully.');
-            });
+            
+            
+               const updateLink =  await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `http://192.168.18.196:4000/trim/${trimmedFileName}`} }, { new: true });
+            
+    console.log(updateLink);
         });
 
     } catch (error) {
