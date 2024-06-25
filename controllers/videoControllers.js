@@ -231,14 +231,41 @@ const downloadTrim = asyncHandler(async (req, res) => {
 
 
 
-const getAllStatus = asyncHandler(async(req,res) =>{
-    const data = await file.find({isPublished:true}).limit(60)
+const getAllStatus = asyncHandler(async (req, res) => {
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1; // Current page number, default 1 if not provided
+    const limit = 16; // Items per page
 
+    // Calculate the number of items to skip
+    const skip = (page - 1) * limit;
 
+    // Query to fetch data with pagination
+    const data = await file.find({ isPublished: true })
+                           .skip(skip)
+                           .limit(limit);
 
-    res.status(200).json(new ApiResponse(200,data,"All Data Fetched Successfully"))
+    // Total number of items in the database (you might want to use this for client-side pagination)
+    const totalCount = await file.countDocuments({ isPublished: true });
 
-})
+    // You can calculate the total number of pages based on totalCount and limit
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Constructing the response
+res.status(200).json(
+    new ApiResponse(200, {
+        data: data,
+        message: "Data Fetched Successfully",
+        pagination: {
+            totalPages: totalPages,
+            currentPage: page,
+            totalItems: totalCount,
+            itemsPerPage: limit
+        }
+    })
+);
+
+});
+
 
 
 export {
