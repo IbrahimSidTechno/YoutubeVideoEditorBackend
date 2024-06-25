@@ -79,7 +79,8 @@ const videosend = async (req, res) => {
         // Save data to database or perform further actions
         const data = await file.create({
             downloadedlink: `http://192.168.18.196:4000/uploads/${filename}`,
-            filename: filePath
+            filename: filePath,
+            isPublished:false
         });
 
         // Respond with success message and Cloudinary result
