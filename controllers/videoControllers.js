@@ -78,7 +78,7 @@ const videosend = async (req, res) => {
 
         // Save data to database or perform further actions
         const data = await file.create({
-            downloadedlink: `http://192.168.18.196:4000/uploads/${filename}`,
+            downloadedlink: `https://links-backend-ziof.onrender.com/uploads/${filename}`,
             filename: filePath,
             isPublished:false
         });
@@ -217,7 +217,7 @@ const downloadTrim = asyncHandler(async (req, res) => {
             // Clean up the trimmed file after download completes
             
             
-               const updateLink =  await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `http://192.168.18.196:4000/trim/${trimmedFileName}`} }, { new: true });
+               const updateLink =  await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `https://links-backend-ziof.onrender.com/trim/${trimmedFileName}`} }, { new: true });
             
     console.log(updateLink);
         });
@@ -279,3 +279,4 @@ export {
     videoGetById,
     videosend
 }
+
