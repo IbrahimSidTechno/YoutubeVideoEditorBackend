@@ -78,9 +78,9 @@ const videosend = async (req, res) => {
 
         // Save data to database or perform further actions
         const data = await file.create({
-            downloadedlink: `https://links-backend-ziof.onrender.com/uploads/${filename}`,
+            downloadedlink: `http://localhost:4000/uploads/${filename}`,
             filename: filePath,
-            isPublished:false
+            isPublished: false
         });
 
         // Respond with success message and Cloudinary result
@@ -215,11 +215,11 @@ const downloadTrim = asyncHandler(async (req, res) => {
             }
 
             // Clean up the trimmed file after download completes
-            
-            
-               const updateLink =  await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `https://links-backend-ziof.onrender.com/trim/${trimmedFileName}`} }, { new: true });
-            
-    console.log(updateLink);
+
+
+            const updateLink = await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `http://localhost:4000/trim/${trimmedFileName}` } }, { new: true });
+
+            console.log(updateLink);
         });
 
     } catch (error) {
