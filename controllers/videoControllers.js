@@ -1,5 +1,5 @@
 
-import ytdl from "ytdl-core";
+import ytdlp from 'ytdlp-nodejs'; 
 import ffmpeg from 'fluent-ffmpeg'
 import fs from "fs"
 import uploadResult from "../utils/cloudinary.js";
@@ -78,9 +78,9 @@ const videosend = async (req, res) => {
 
         // Save data to database or perform further actions
         const data = await file.create({
-            downloadedlink: `http://localhost:4000/uploads/${filename}`,
+            downloadedlink: `https://links-backend-ziof.onrender.com/uploads/${filename}`,
             filename: filePath,
-            isPublished: false
+            isPublished:false
         });
 
         // Respond with success message and Cloudinary result
@@ -109,55 +109,35 @@ const videoGetById = asyncHandler(async (req, res) => {
 
 const videoGet = asyncHandler(async (req, res) => {
     try {
-        // Extract the 'url' parameter from the request query
         const { url } = req.query;
+
+        // Validate URL presence
         if (!url) {
-            throw new ApiError(404, "Url Is Undefined");
+            return res.status(400).send('Url is required');
         }
 
-        // Log the URL to verify it's received correctly
         console.log("Requested URL:", url);
 
-        // Get video information using ytdl library
-        const info = await ytdl.getInfo(url);
-        if (!info) {
-            throw new ApiError(404, "Url not Correct");
-        }
+        // Stream video to response
+        const stream = ytdlp.stream(url, {
+            filter: 'audioandvideo',
+            quality: 'highest',
+        }).on('error', (err) => {
+            console.error('Stream error:', err);
+            res.status(500).send('Error streaming video');
+        });
 
-        // Choose the format with both video and audio (highest quality)
-        const format = ytdl.chooseFormat(info.formats, { filter: 'videoandaudio', quality: 'highestvideo' });
+        // Set response headers for streaming
+        const fileName = 'video.mp4';
+        res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+        res.setHeader("Content-Type", "video/mp4");
 
-        // Extract video title from the video information
-        const title = info.videoDetails.title;
-
-        // Calculate file size in megabytes
-        let fileSizeInBytes = 0;
-        if (format && format.contentLength) {
-            fileSizeInBytes = parseInt(format.contentLength);
-        } else {
-            // Fallback mechanism: Estimate file size based on duration and bitrate
-            const durationInSeconds = info.videoDetails.lengthSeconds;
-            const estimatedBitrate = format.bitrate || 1; // Default to 1 if bitrate is not available
-            fileSizeInBytes = durationInSeconds * estimatedBitrate / 8; // Calculate estimated file size in bytes
-        }
-        const fileSizeInMB = fileSizeInBytes / (1024 * 1024);
-
-        // Log the title and file size to verify they're correctly set
-        console.log(`Title: ${title}, File Size: ${Math.round(fileSizeInMB)} MB`);
-
-        // Set response headers to indicate file download and size
-        res.setHeader(
-            "Content-Disposition",
-            `attachment; filename*=UTF-8''${encodeURIComponent(title)}.mp4`
-        );
-        res.setHeader("File-Size-MB", Math.round(fileSizeInMB));
-
-        // Pipe the video stream from ytdl to the response stream
-        ytdl(url, { format }).pipe(res);
+        // Pipe the stream to response
+        stream.pipe(res);
+        
     } catch (error) {
-        // Handle errors gracefully
-        console.error("Error:", error);
-        res.status(error.statusCode || 500).send(error.message);
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -215,11 +195,11 @@ const downloadTrim = asyncHandler(async (req, res) => {
             }
 
             // Clean up the trimmed file after download completes
-
-
-            const updateLink = await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `http://localhost:4000/trim/${trimmedFileName}` } }, { new: true });
-
-            console.log(updateLink);
+            
+            
+               const updateLink =  await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `https://links-backend-ziof.onrender.com/trim/${trimmedFileName}`} }, { new: true });
+            
+    console.log(updateLink);
         });
 
     } catch (error) {
