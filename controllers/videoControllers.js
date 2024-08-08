@@ -9,7 +9,8 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import DeleteFile from "../utils/cloudinaryDeleteVideo.js";
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import path, { dirname, join } from 'path';
+import { log } from 'console';
 
 
 const getFileSizeInMB = (filePath) => {
@@ -35,8 +36,7 @@ const sanitizeFilename = (filename) => {
 
 
 
-
-const videosend = async (req, res) => {
+const videosend = asyncHandler(async (req, res) => {
     try {
         const { url } = req.body;
 
@@ -44,54 +44,75 @@ const videosend = async (req, res) => {
             throw new ApiError(404, "Url Is Undefined");
         }
 
-        // Get video information using ytdl library
-        const info = await ytdl.getInfo(url);
-        if (!info) {
-            throw new ApiError(404, "Url not Correct");
+        // Validate ytdlp object
+        if (!ytdlp || typeof ytdlp.download !== 'function') {
+            throw new ApiError(500, "ytdlp library is not properly imported or used");
         }
 
-        // Choose the highest quality format for the video
-        const format = ytdl.chooseFormat(info.formats, { filter: 'videoandaudio', quality: 'highestvideo' });
-
-        // Set the filename for the downloaded video
-        const filename = sanitizeFilename(info.videoDetails.title) + '.mp4';
-
-        // Construct the file path relative to the current script's directory
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = dirname(__filename);
-        const filePath = join(__dirname, '../public/uploads', filename);
 
-        // Pipe the video stream from ytdl to the file stream for saving
-        const fileStream = fs.createWriteStream(filePath);
-        ytdl(url, { format }).pipe(fileStream);
+        // Define the download options
+        const fileName = sanitizeFilename(url) + '.mp4';
+        const filePath = path.join(__dirname, '../public/uploads', fileName);
 
-        // Wait for the file to finish writing
-        await new Promise((resolve, reject) => {
-            fileStream.on('finish', resolve);
-            fileStream.on('error', reject);
-        });
+        // Check if file already exists
+        
 
-        // Upload the video to Cloudinary
-        const mb = getFileSizeInMB(filePath);
-        // console.log(mb);
-        // const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
+        // Ensure the directory exists
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
-        // Save data to database or perform further actions
-        const data = await file.create({
-            downloadedlink: `https://links-backend-ziof.onrender.com/uploads/${filename}`,
-            filename: filePath,
-            isPublished:false
-        });
+        // Download the video
+        try {
+            await new Promise((resolve, reject) => {
+                const downloadStream = ytdlp.download(url, {
+                    filter: 'audioandvideo',
+                    quality: 'highest',
+                    format: 'mp4',
+                    output: {
+                        outDir: path.dirname(filePath),
+                        fileName: fileName
+                    }
+                });
+               console.log(downloadStream.on);
+                downloadStream.on('finished', () => {
+                    console.log("Starting download...");
+                    console.log("Download completed");
+                    resolve();
+                });
+                 downloadStream.on('error', (err) => {
+                    console.error("Download error:", err);
+                    reject(err);
+                });
 
-        // Respond with success message and Cloudinary result
-        res.status(200).json(new ApiResponse(200, data, "Data Add Successfully"));
+                // Optional: Log data events to track progress
+            
+            });
+
+            console.log("File saved at:", filePath);
+
+            // Optionally upload the video to Cloudinary
+            // const cloudinaryResult = await uploadResult(filePath); // Adjust the function call accordingly
+
+            // Save data to database or perform further actions
+            const data = await file.create({
+                downloadedlink: `http://localhost:4000/uploads/${fileName}`,
+                filename: filePath,
+                isPublished: false
+            });
+
+            // Respond with success message
+            res.status(200).json(new ApiResponse(200, data, "Data Added Successfully"));
+        } catch (error) {
+            console.error("Error during download:", error);
+            throw new ApiError(500, "Error downloading video");
+        }
     } catch (error) {
         // Handle errors gracefully
-        console.error("Error:", error);
-        res.status(500).send(error.message);
+        console.error("Unhandled Error:", error);
+        res.status(error.statusCode || 500).send(error.message);
     }
-};
-
+});
 
 const videoGetById = asyncHandler(async (req, res) => {
     const { id } = req.params
@@ -118,23 +139,41 @@ const videoGet = asyncHandler(async (req, res) => {
 
         console.log("Requested URL:", url);
 
-        // Stream video to response
+        // Download video and stream to response
+        const file = fs.createWriteStream('test.mp4');
         const stream = ytdlp.stream(url, {
-            filter: 'audioandvideo',
-            quality: 'highest',
+            filter: 'videoonly',
+            quality: '2160p',
         }).on('error', (err) => {
             console.error('Stream error:', err);
             res.status(500).send('Error streaming video');
         });
-
-        // Set response headers for streaming
-        const fileName = 'video.mp4';
+        
+        // Set response headers
+        const fileName = 'hello.mp4';
         res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-        res.setHeader("Content-Type", "video/mp4");
-
+        
         // Pipe the stream to response
         stream.pipe(res);
         
+        // Download video to local file and log progress
+        console.log("edgdjf");
+        ytdlp.download(url, {
+            filter: 'mergevideo',
+            quality: '1080p',
+            output: {
+                fileName: fileName,
+                outDir: './test',
+            },
+        }).on('progress', (data) => {
+            console.log('Download progress:', data);
+        }).on('end', () => {
+            console.log('Download complete');
+        }).on('error', (err) => {
+            console.error('Download error:', err);
+            res.status(500).send('Error downloading video');
+        });
+
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send('Internal Server Error');
@@ -197,7 +236,7 @@ const downloadTrim = asyncHandler(async (req, res) => {
             // Clean up the trimmed file after download completes
             
             
-               const updateLink =  await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `https://links-backend-ziof.onrender.com/trim/${trimmedFileName}`} }, { new: true });
+               const updateLink =  await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `http://localhost:4000/trim/${trimmedFileName}`} }, { new: true });
             
     console.log(updateLink);
         });
