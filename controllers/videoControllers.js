@@ -10,7 +10,6 @@ import ApiResponse from "../utils/ApiResponse.js";
 import DeleteFile from "../utils/cloudinaryDeleteVideo.js";
 import { fileURLToPath } from 'url';
 import path, { dirname, join } from 'path';
-import { log } from 'console';
 import ytdl from 'ytdl-core';
 
 
