@@ -1,5 +1,5 @@
 
-import ytdlp from 'ytdlp-nodejs'; 
+import ytdlp from 'ytdlp-nodejs';
 import ffmpeg from 'fluent-ffmpeg'
 import fs from "fs"
 import uploadResult from "../utils/cloudinary.js";
@@ -11,6 +11,7 @@ import DeleteFile from "../utils/cloudinaryDeleteVideo.js";
 import { fileURLToPath } from 'url';
 import path, { dirname, join } from 'path';
 import { log } from 'console';
+import ytdl from 'ytdl-core';
 
 
 const getFileSizeInMB = (filePath) => {
@@ -43,21 +44,27 @@ const videosend = asyncHandler(async (req, res) => {
         if (!url) {
             throw new ApiError(404, "Url Is Undefined");
         }
-
+        const info = await ytdl.getInfo(url);
+        if (!info) {
+            throw new ApiError(404, "Url not Correct");
+        }
         // Validate ytdlp object
         if (!ytdlp || typeof ytdlp.download !== 'function') {
             throw new ApiError(500, "ytdlp library is not properly imported or used");
         }
 
+
         const __filename = fileURLToPath(import.meta.url);
         const __dirname = dirname(__filename);
 
         // Define the download options
-        const fileName = sanitizeFilename(url) + '.mp4';
+        const fileName = sanitizeFilename(info.videoDetails.title) + '.mp4';
         const filePath = path.join(__dirname, '../public/uploads', fileName);
-
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
         // Check if file already exists
-        
+
 
         // Ensure the directory exists
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -74,19 +81,20 @@ const videosend = asyncHandler(async (req, res) => {
                         fileName: fileName
                     }
                 });
-               console.log(downloadStream.on);
                 downloadStream.on('finished', () => {
                     console.log("Starting download...");
                     console.log("Download completed");
                     resolve();
                 });
-                 downloadStream.on('error', (err) => {
+                downloadStream.on('error', (err) => {
                     console.error("Download error:", err);
                     reject(err);
                 });
 
                 // Optional: Log data events to track progress
-            
+                downloadStream.on('progress', (data) => {
+                    // console.log('Download progress:', data.percentage_str);
+                })
             });
 
             console.log("File saved at:", filePath);
@@ -139,47 +147,28 @@ const videoGet = asyncHandler(async (req, res) => {
 
         console.log("Requested URL:", url);
 
-        // Download video and stream to response
-        const file = fs.createWriteStream('test.mp4');
+        // Stream video to response
         const stream = ytdlp.stream(url, {
-            filter: 'videoonly',
-            quality: '2160p',
+            filter: 'audioandvideo',
+            quality: 'highest',
         }).on('error', (err) => {
             console.error('Stream error:', err);
             res.status(500).send('Error streaming video');
         });
-        
-        // Set response headers
-        const fileName = 'hello.mp4';
+
+        // Set response headers for streaming
+        const fileName = 'video.mp4';
         res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-        
+        res.setHeader("Content-Type", "video/mp4");
+
         // Pipe the stream to response
         stream.pipe(res);
-        
-        // Download video to local file and log progress
-        console.log("edgdjf");
-        ytdlp.download(url, {
-            filter: 'mergevideo',
-            quality: '1080p',
-            output: {
-                fileName: fileName,
-                outDir: './test',
-            },
-        }).on('progress', (data) => {
-            console.log('Download progress:', data);
-        }).on('end', () => {
-            console.log('Download complete');
-        }).on('error', (err) => {
-            console.error('Download error:', err);
-            res.status(500).send('Error downloading video');
-        });
 
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send('Internal Server Error');
     }
 });
-
 
 
 
@@ -234,11 +223,11 @@ const downloadTrim = asyncHandler(async (req, res) => {
             }
 
             // Clean up the trimmed file after download completes
-            
-            
-               const updateLink =  await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `http://localhost:4000/trim/${trimmedFileName}`} }, { new: true });
-            
-    console.log(updateLink);
+
+
+            const updateLink = await file.findByIdAndUpdate(_id, { $set: { downloadedlink: `http://localhost:4000/trim/${trimmedFileName}` } }, { new: true });
+
+            console.log(updateLink);
         });
 
     } catch (error) {
